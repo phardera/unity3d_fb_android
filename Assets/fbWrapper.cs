@@ -39,6 +39,7 @@ public class fbWrapper : MonoBehaviour {
 
     void msgReceiver(string msg)
     {
+        Debug.Log(msg);
         if (tmpCBFunc !=null)
         {
             Dictionary<string, object> cache =(Dictionary<string, object>)MiniJSON.Json.Deserialize(msg);
@@ -124,6 +125,17 @@ public class fbWrapper : MonoBehaviour {
         if (fbWrapperObj !=null)
         {
             fbWrapperObj.Call("sendRequest", new object[1]{message});
+            return true;
+        }
+        return false;
+    }
+
+    public bool makeMeRequest(queryCBFunc pcbfunc)
+    {
+        tmpCBFunc =pcbfunc;
+        if (fbWrapperObj !=null)
+        {
+            fbWrapperObj.Call("makeMeRequest");
             return true;
         }
         return false;

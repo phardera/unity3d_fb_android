@@ -37,6 +37,11 @@ public class test : MonoBehaviour {
             {
                 fbWrapper.inst.sendRequest("check out my app !");
             }
+
+            if (GUI.Button(new Rect(10,450,100,100), "newMe request"))
+            {
+                fbWrapper.inst.makeMeRequest(queryCB);
+            }
         }
 
         if (myhash !=null)
@@ -52,6 +57,9 @@ public class test : MonoBehaviour {
     string queryresult =null;
     void queryCB(bool ret, object data)
     {
+        if (data ==null)
+            return;
+
         string tmpstr ="";
         List<object> OBJARR =(List<object>)data;
         for (int i=0;i<OBJARR.Count;++i)
@@ -66,4 +74,5 @@ public class test : MonoBehaviour {
 
         queryresult =tmpstr;
     }
+
 }

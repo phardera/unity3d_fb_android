@@ -22,12 +22,13 @@ import com.facebook.*;
 import com.facebook.widget.WebDialog;
 import com.facebook.widget.WebDialog.OnCompleteListener;
 import com.facebook.model.GraphObject;
+import com.facebook.model.GraphUser;
 
 import com.unity3d.player.UnityPlayer;
 import com.macaronics.iab.overrideActivity;
 
 import org.json.JSONArray;
-
+import org.json.JSONObject;
 
 public class fbWrapper
 {
@@ -284,6 +285,76 @@ public class fbWrapper
             }
         });
 
+    }
+
+    public void makeMeRequest()
+    {
+        final Session session =Session.getActiveSession();
+        if (session.isOpened()==false)
+        {
+            Log.d("Unity::makeMeRequest()", "invalid session");
+            return;
+        }
+
+        // Make an API call to get user data and define a  new callback to handle the response.
+        final Request request = Request.newMeRequest(session, new Request.GraphUserCallback() {
+            @Override
+            public void onCompleted(GraphUser user, Response response) {
+                // If the response is successful
+                if (session == Session.getActiveSession()) {
+                    if (user != null) {
+                        // Set the id for the ProfilePictureView
+                        // view that in turn displays the profile picture.
+                        //profilePictureView.setProfileId(user.getId());
+                        // Set the Textview's text to the user's name.
+                        //userNameView.setText(user.getName());
+                        Log.d("Unity::makeMeRequest()", "user.getId()="+user.getId());
+                        Log.d("Unity::makeMeRequest()", "user.getName()="+user.getName());
+                        Log.d("Unity::makeMeRequest()", "user.getFirstName()="+user.getFirstName());
+                        Log.d("Unity::makeMeRequest()", "user.getMiddleName()="+user.getMiddleName());
+                        Log.d("Unity::makeMeRequest()", "user.getLastName()="+user.getLastName());
+                        Log.d("Unity::makeMeRequest()", "user.getLink()="+user.getLink());
+                        Log.d("Unity::makeMeRequest()", "user.getUsername()="+user.getUsername());
+                        Log.d("Unity::makeMeRequest()", "user.getBirthday()="+user.getBirthday());
+                        Log.d("Unity::makeMeRequest()", "user.getLocation()="+user.getLocation());
+
+                        
+                        if (mEventHandler !=null)
+                        {
+                            String str ="[";
+
+                            str+="{\"Id\":\""+user.getId()+"\"},";
+                            str+="{\"Name\":\""+user.getName()+"\"},";
+                            str+="{\"FirstName\":\""+user.getFirstName()+"\"},";
+                            str+="{\"MiddleName\":\""+user.getMiddleName()+"\"},";
+                            str+="{\"LastName\":\""+user.getLastName()+"\"},";
+                            str+="{\"Link\":\""+user.getLink()+"\"},";
+                            str+="{\"Username\":\""+user.getUsername()+"\"},";
+                            str+="{\"Birthday\":\""+user.getBirthday()+"\"},";
+                            str+="{\"Location\":\""+((user.getLocation()==null) ? "null":(user.getLocation().toString()))+"\"}";
+
+                            str +="]";
+
+                            UnityPlayer.UnitySendMessage(mEventHandler, "msgReceiver", "{\"ret\":\"true\",\"dat\":"+str+"}");
+                        }
+
+                    }
+                }
+
+                if (response.getError() != null) {
+                    // Handle errors, will do so later.
+                    Log.d("Unity::makeMeRequest()", "response.getError() !=null");
+                }
+            }
+        });
+
+        Log.d("Unity::invokeQuery()", "send newMeRequest request...");
+        
+        mActivity.runOnUiThread(new Runnable(){
+            public void run(){        
+                //request.executeAsync();
+                Request.executeBatchAsync(request);
+            }});
     }
     
     private Session.StatusCallback statusCallback = new SessionStatusCallback();
