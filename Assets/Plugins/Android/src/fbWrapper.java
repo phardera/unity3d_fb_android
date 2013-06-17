@@ -23,12 +23,21 @@ import com.facebook.widget.WebDialog;
 import com.facebook.widget.WebDialog.OnCompleteListener;
 import com.facebook.model.GraphObject;
 import com.facebook.model.GraphUser;
+import com.facebook.Session.NewPermissionsRequest;
 
 import com.unity3d.player.UnityPlayer;
 import com.macaronics.iab.overrideActivity;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.json.JSONException;
+
+import java.util.List;
+import java.util.Arrays;
+import java.util.Collection;
+
+import android.view.Window;
+import android.view.WindowManager;
 
 public class fbWrapper
 {
@@ -370,6 +379,112 @@ public class fbWrapper
                 Log.d("Unity::onSessionStateChange()", "state.isOpened() ===false");
             }
         }
+    }
+
+    //
+    //ref:http://developers.facebook.com/docs/howtos/androidsdk/3.0/publish-to-feed/
+    //
+    private static final List<String> PERMISSIONS = Arrays.asList("publish_actions");
+    private static final String PENDING_PUBLISH_KEY = "pendingPublishReauthorization";
+    private boolean pendingPublishReauthorization = false;
+
+    private boolean isSubsetOf(Collection<String> subset, Collection<String> superset) {
+        for (String string : subset) {
+            if (!superset.contains(string)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Show a dialog (feed or request) without a notification bar (i.e. full screen)
+    // Parameters of a WebDialog that should be displayed
+    private WebDialog dialog = null;
+    private String dialogAction = null;
+    private Bundle dialogParams = null;    
+    private void showDialogWithoutNotificationBar(String action, Bundle params) {
+        // Create the dialog
+        dialog = new WebDialog.Builder(mActivity, Session.getActiveSession(), action, params).setOnCompleteListener(
+                new WebDialog.OnCompleteListener() {
+
+            @Override
+            public void onComplete(Bundle values, FacebookException error) {
+                if (error != null && !(error instanceof FacebookOperationCanceledException)) {
+                    //((HomeActivity)getActivity()).showError(getResources().getString(R.string.network_error), false);
+                }
+                dialog = null;
+                dialogAction = null;
+                dialogParams = null;
+            }
+        }).build();
+
+        // Hide the notification bar and resize to full screen
+        Window dialog_window = dialog.getWindow();
+        dialog_window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        
+        // Store the dialog information in attributes
+        dialogAction = action;
+        dialogParams = params;
+        
+        // Show the dialog
+        dialog.show();
+    }
+
+    public void publishStory(final String name, final String caption, final String desc, final String link, final String imageUrl)
+    {
+
+        final Session session = Session.getActiveSession();
+
+        if (session != null){
+
+            mActivity.runOnUiThread(new Runnable(){
+                public void run(){
+
+                    // Check for publish permissions    
+                    List<String> permissions = session.getPermissions();
+                    if (!isSubsetOf(PERMISSIONS, permissions)) {
+                        pendingPublishReauthorization = true;
+                        Session.NewPermissionsRequest newPermissionsRequest = new Session.NewPermissionsRequest(mActivity, PERMISSIONS);
+                        session.requestNewPublishPermissions(newPermissionsRequest);
+                        return;
+                    }
+
+                    Bundle postParams = new Bundle();
+                    postParams.putString("name", name);
+                    postParams.putString("caption", caption);
+                    postParams.putString("description", desc);
+                    postParams.putString("link", link);
+                    postParams.putString("picture", imageUrl);
+
+                    /*
+                    Request.Callback callback= new Request.Callback() {
+                        public void onCompleted(Response response) {
+                            JSONObject graphResponse = response.getGraphObject().getInnerJSONObject();
+                            String postId = null;
+                            try {
+                                postId = graphResponse.getString("id");
+                            } catch (JSONException e) {
+                                Log.i("Unity::publishStories", "JSON error "+ e.getMessage());
+                            }
+                            FacebookRequestError error = response.getError();
+                            if (error != null) {
+                                Toast.makeText(mActivity.getApplicationContext(), error.getErrorMessage(), Toast.LENGTH_SHORT).show();
+                            } else {
+                                Toast.makeText(mActivity.getApplicationContext(), postId, Toast.LENGTH_LONG).show();
+                            }
+                        }
+                    };
+
+                    Request request = new Request(session, "me/feed", postParams, HttpMethod.POST, callback);
+                    RequestAsyncTask task = new RequestAsyncTask(request);
+                    task.execute();
+                    */
+                    showDialogWithoutNotificationBar("feed", postParams);
+                }
+            });
+
+        }
+
     }
 
 }

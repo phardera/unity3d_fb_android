@@ -42,6 +42,16 @@ public class test : MonoBehaviour {
             {
                 fbWrapper.inst.makeMeRequest(queryCB);
             }
+
+            if (GUI.Button(new Rect(10,560,100,100), "publish\nStory"))
+            {
+                fbWrapper.inst.publishStory(
+                    "Facebook SDK for Android", 
+                    "Build great social apps and get more installs.",
+                    "The Facebook SDK for Android makes it easier and faster to develop Facebook integrated Android apps.",
+                    "https://developers.facebook.com/android",
+                    "https://raw.github.com/fbsamples/ios-3.x-howtos/master/Images/iossdk_logo.png");
+            }
         }
 
         if (myhash !=null)

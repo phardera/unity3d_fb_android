@@ -141,4 +141,14 @@ public class fbWrapper : MonoBehaviour {
         return false;
     }
 
+    public bool publishStory(string name, string caption, string desc, string link, string imageUrl)
+    {
+        if (fbWrapperObj !=null)
+        {
+            fbWrapperObj.Call("publishStory", new object[5]{name, caption, desc, link, imageUrl});
+            return true;
+        }
+        return false;
+    }
+
 }
